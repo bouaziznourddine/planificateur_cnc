@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vue formulaire améliorée avec onglet Graphiques - Compatible Odoo 12 -->
+        <record id="view_planificateur_cnc_form_gantt" model="ir.ui.view">
+            <field name="name">planificateur.cnc.form.gantt</field>
+            <field name="model">planificateur.cnc</field>
+            <field name="inherit_id" ref="planificateur_cnc.view_planificateur_cnc_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Ajouter le bouton "Générer Graphiques" dans le header -->
+                <header position="inside">
+                    <button name="action_generer_graphiques"
+                            string="Générer Graphiques"
+                            type="object"
+                            class="oe_highlight"
+                            attrs="{'invisible': [('state', '!=', 'planned')]}"
+                            help="Générer le diagramme de Gantt et la timeline visuelle"/>
+                </header>
+                
+                <!-- Ajouter l'onglet Graphiques après l'onglet Planning -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Graphiques" name="graphiques" 
+                          attrs="{'invisible': [('vue_graphique_disponible', '=', False)]}">
+                        
+                        <group>
+                            <group>
+                                <field name="vue_graphique_disponible" invisible="1"/>
+                                <field name="gantt_image" invisible="1"/>
+                                <field name="timeline_image" invisible="1"/>
+                                <field name="gantt_image_filename"/>
+                                <field name="timeline_image_filename"/>
+                            </group>
+                        </group>
+                        
+                        <separator string="Diagramme de Gantt"/>
+                        
+                        <group attrs="{'invisible': [('gantt_image', '!=', False)]}">
+                            <div class="alert alert-info" role="alert">
+                                <p>
+                                    Cliquez sur le bouton "Générer Graphiques" 
+                                    pour créer le diagramme de Gantt haute résolution.
+                                </p>
+                            </div>
+                        </group>
+                        
+                        <group attrs="{'invisible': [('gantt_image', '=', False)]}">
+                            <field name="gantt_image" 
+                                   widget="image" 
+                                   nolabel="1"/>
+                        </group>
+                        
+                        <separator string="Timeline Visuelle"/>
+                        
+                        <group attrs="{'invisible': [('timeline_image', '!=', False)]}">
+                            <div class="alert alert-info" role="alert">
+                                <p>
+                                    La timeline visuelle sera générée en même temps que le Gantt.
+                                </p>
+                            </div>
+                        </group>
+                        
+                        <group attrs="{'invisible': [('timeline_image', '=', False)]}">
+                            <field name="timeline_image" 
+                                   widget="image" 
+                                   nolabel="1"/>
+                        </group>
+                        
+                        <group attrs="{'invisible': ['|', ('gantt_image', '=', False), ('timeline_image', '=', False)]}">
+                            <div class="alert alert-success" role="alert">
+                                <p>Graphiques générés avec succès!</p>
+                                <p>
+                                    Les graphiques haute résolution sont disponibles ci-dessus.
+                                    Vous pouvez les télécharger ou les inclure dans vos rapports.
+                                </p>
+                            </div>
+                        </group>
+                        
+                    </page>
+                </xpath>
+                
+                <!-- Ajouter un onglet Statistiques -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Statistiques" name="statistiques_visuelles">
+                        <group>
+                            <group string="Résumé du Planning">
+                                <field name="name"/>
+                                <field name="state" readonly="1"/>
+                                <field name="date_debut_horizon"/>
+                                <field name="date_fin_horizon"/>
+                            </group>
+                            <group string="Ressources">
+                                <field name="machine_1_id"/>
+                                <field name="machine_2_id"/>
+                                <field name="cap_outils_machine_1"/>
+                                <field name="cap_outils_machine_2"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="OF et Production">
+                                <field name="of_candidat_ids" widget="many2many_tags" readonly="1"/>
+                                <field name="of_selectionne_ids" widget="many2many_tags" readonly="1"/>
+                            </group>
+                            
+                            <group string="Blocs et Timeline">
+                                <field name="bloc_production_ids" readonly="1" nolabel="1"/>
+                                <field name="timeline_ids" readonly="1" nolabel="1"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Paramètres">
+                                <field name="objectif_principal" readonly="1"/>
+                                <field name="temps_setup_standard_min" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                    </page>
+                </xpath>
+                
+            </field>
+        </record>
+        
+        <!-- Vue Kanban pour afficher une miniature du Gantt -->
+        <record id="view_planificateur_cnc_kanban_gantt" model="ir.ui.view">
+            <field name="name">planificateur.cnc.kanban.gantt</field>
+            <field name="model">planificateur.cnc</field>
+            <field name="inherit_id" ref="planificateur_cnc.view_planificateur_cnc_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//kanban" position="inside">
+                    <field name="gantt_image"/>
+                    <field name="timeline_image"/>
+                    <field name="vue_graphique_disponible"/>
+                </xpath>
+                
+                <xpath expr="//div[@class='oe_kanban_details']" position="after">
+                    <div class="mt-2">
+                        <t t-if="record.gantt_image.raw_value">
+                            <span class="badge badge-success">
+                                Gantt disponible
+                            </span>
+                        </t>
+                        <t t-if="record.timeline_image.raw_value">
+                            <span class="badge badge-info">
+                                Timeline disponible
+                            </span>
+                        </t>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+        
+    </data>
+</odoo>

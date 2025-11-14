@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Planificateur CNC Maugars</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #4472C4;
+            border-bottom: 3px solid #4472C4;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #5B9BD5;
+            margin-top: 30px;
+        }
+        .feature {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #4472C4;
+        }
+        .constraint {
+            background: #fff3cd;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #ffc107;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .btn {
+            background: #4472C4;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #f8d7da;
+            padding: 15px;
+            border-left: 4px solid #dc3545;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏭 Planificateur CNC Maugars</h1>
+    
+    <p><strong>Version 1.0</strong> - Système d'ordonnancement et de planification pour machines CNC</p>
+    
+    <div class="feature">
+        <h3>📊 Développé par</h3>
+        <p><strong>Bouaziz Nourddine</strong> - Ingénieur Recherche & Innovation, CESI<br>
+        Date: 23 octobre 2025</p>
+    </div>
+
+    <h2>🎯 Objectif</h2>
+    <p>
+        Ce module Odoo implémente un système complet de planification et d'ordonnancement 
+        pour la production sur machines CNC, basé sur le rapport d'ordonnancement Maugars v1.0.
+    </p>
+
+    <h2>✨ Fonctionnalités principales</h2>
+
+    <div class="feature">
+        <h3>1. Gestion des Ordres de Fabrication (OF)</h3>
+        <ul>
+            <li>Création et suivi complet des OF</li>
+            <li>Gestion des types de pièces et gammes de fabrication</li>
+            <li>Suivi des quantités (prévues, chargées, terminées)</li>
+            <li>Priorités et dates de livraison</li>
+        </ul>
+    </div>
+
+    <div class="feature">
+        <h3>2. Optimisation intelligente (fonction action_optimiser)</h3>
+        <p>Algorithme sophistiqué en 4 étapes :</p>
+        <ol>
+            <li><strong>Validation des contraintes</strong> : Vérification de toutes les contraintes critiques</li>
+            <li><strong>Tri et priorisation</strong> : Selon 6 objectifs différents (minimiser retards, maximiser production, etc.)</li>
+            <li><strong>Création des blocs</strong> : Regroupement optimal des OF avec contrainte <code>Σ(outils) ≤ capacité magasin</code></li>
+            <li><strong>Affectation machines</strong> : Répartition équilibrée entre les machines</li>
+        </ol>
+    </div>
+
+    <div class="feature">
+        <h3>3. Planification temporelle</h3>
+        <ul>
+            <li>Génération automatique du planning avec dates précises</li>
+            <li>Prise en compte des temps de setup (30 min par défaut)</li>
+            <li>Visualisation Timeline complète</li>
+            <li>Calcul automatique des retards</li>
+        </ul>
+    </div>
+
+    <div class="feature">
+        <h3>4. Export et reporting</h3>
+        <ul>
+            <li>Export Excel complet du planning</li>
+            <li>Feuille Timeline détaillée</li>
+            <li>Feuille Blocs de production</li>
+            <li>Statistiques (makespan, taux d'utilisation, etc.)</li>
+        </ul>
+    </div>
+
+    <h2>⚙️ Contraintes respectées</h2>
+
+    <p>Le module implémente <strong>toutes les 14 contraintes</strong> identifiées dans le rapport :</p>
+
+    <div class="constraint">
+        <strong>Contraintes machines et outils</strong>
+        <ul>
+            <li>✓ Capacité d'outils du bloc ≤ capacité magasin</li>
+            <li>✓ Outils neufs à chaque bloc</li>
+            <li>✓ Temps de setup obligatoire</li>
+        </ul>
+    </div>
+
+    <div class="constraint">
+        <strong>Contraintes de production</strong>
+        <ul>
+            <li>✓ Séquence d'opérations (OP1 puis OP2)</li>
+            <li>✓ Non-préemption des opérations</li>
+            <li>✓ Capacité montage respectée</li>
+            <li>✓ Unicité machine par OF</li>
+        </ul>
+    </div>
+
+    <div class="constraint">
+        <strong>Contraintes temporelles et humaines</strong>
+        <ul>
+            <li>✓ Objectif de date de livraison</li>
+            <li>✓ Disponibilité opérateurs</li>
+            <li>✓ Horaires de travail</li>
+        </ul>
+    </div>
+
+    <h2>🚀 Installation</h2>
+    <ol>
+        <li>Copier le dossier <code>planificateur_cnc</code> dans le répertoire des addons Odoo</li>
+        <li>Redémarrer le service Odoo</li>
+        <li>Mettre à jour la liste des applications</li>
+        <li>Installer le module "Planificateur CNC Maugars"</li>
+    </ol>
+
+    <h2>📖 Utilisation rapide</h2>
+
+    <h3>Configuration (une seule fois)</h3>
+    <ol>
+        <li><strong>Machines</strong> : Menu Configuration → Machines CNC (créer Machine 1 et Machine 2)</li>
+        <li><strong>Opérations</strong> : Menu Configuration → Opérations (OP10, OP20, etc.)</li>
+        <li><strong>Types de pièces</strong> : Menu Configuration → Types de Pièces</li>
+    </ol>
+
+    <h3>Planification (quotidien)</h3>
+    <ol>
+        <li><strong>Créer les OF</strong> : Menu Planification → Ordres de Fabrication</li>
+        <li><strong>Nouveau scénario</strong> : Menu Planification → Planificateur CNC → Créer</li>
+        <li><strong>Configurer</strong> : Dates, machines, objectif</li>
+        <li><strong>Sélectionner OF</strong> : Onglet "OF Candidats"</li>
+        <li><strong>Optimiser</strong> : Bouton "Optimiser" ⚡</li>
+        <li><strong>Générer</strong> : Bouton "Générer Planning" 📅</li>
+        <li><strong>Exporter</strong> : Bouton "Exporter Excel" 📊</li>
+    </ol>
+
+    <div class="warning">
+        <h3>⚠️ Important</h3>
+        <p>
+            La fonction <code>action_optimiser</code> est le cœur du système. 
+            Elle respecte rigoureusement toutes les contraintes du rapport et 
+            génère des solutions d'ordonnancement optimales.
+        </p>
+        <p>
+            <strong>Ne jamais modifier</strong> les valeurs calculées automatiquement 
+            (nombre d'outils, durées, etc.) sans recalculer l'optimisation.
+        </p>
+    </div>
+
+    <h2>📊 Architecture technique</h2>
+    
+    <h3>Modèles principaux</h3>
+    <ul>
+        <li><code>planificateur.cnc</code> - Scénario de planification</li>
+        <li><code>bloc.production</code> - Blocs de production</li>
+        <li><code>ordre.fabrication</code> - Ordres de fabrication</li>
+        <li><code>piece.type</code> - Types de pièces</li>
+        <li><code>machine.cnc</code> - Machines CNC</li>
+        <li><code>planning.timeline</code> - Timeline du planning</li>
+    </ul>
+
+    <h3>Algorithme d'optimisation</h3>
+    <pre><code>def action_optimiser(self):
+    # 1. Validation contraintes
+    self._valider_contraintes_of()
+    
+    # 2. Tri et priorisation
+    of_tries = self._trier_of_par_priorite()
+    
+    # 3. Création des blocs
+    blocs = self._creer_blocs_production(of_tries)
+    
+    # 4. Affectation machines
+    self._affecter_machines_aux_blocs(blocs)
+    
+    return blocs_optimises
+</code></pre>
+
+    <h2>📞 Support</h2>
+    <p>
+        Pour toute question ou suggestion :<br>
+        <strong>Email :</strong> nourddine.bouaziz@cesi.fr<br>
+        <strong>Organisation :</strong> CESI - Recherche & Innovation
+    </p>
+
+    <h2>📜 Licence</h2>
+    <p>
+        Ce module est développé dans le cadre d'un projet de recherche CESI.<br>
+        Tous droits réservés © 2025 CESI
+    </p>
+
+    <hr>
+    
+    <p style="text-align: center; color: #666; margin-top: 40px;">
+        <strong>Planificateur CNC Maugars v1.0</strong><br>
+        Basé sur le rapport d'ordonnancement Maugars (23 octobre 2025)
+    </p>
+</body>
+</html>

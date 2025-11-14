@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire du Planificateur CNC -->
+    <record id="view_planificateur_cnc_form" model="ir.ui.view">
+        <field name="name">planificateur.cnc.form</field>
+        <field name="model">planificateur.cnc</field>
+        <field name="arch" type="xml">
+            <form string="Planificateur CNC">
+                <header>
+                    <button name="action_selectionner_of" string="Sélectionner OF" 
+                            type="object" class="oe_highlight" 
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_optimiser" string="Optimiser" 
+                            type="object" class="oe_highlight" 
+                            attrs="{'invisible': [('state', 'not in', ['draft', 'of_selected'])]}"/>
+                    <button name="action_generer_planning" string="Générer Planning" 
+                            type="object" class="oe_highlight" 
+                            attrs="{'invisible': [('state', '!=', 'optimized')]}"/>
+                    <button name="action_exporter_excel" string="Exporter Excel" 
+                            type="object" 
+                            attrs="{'invisible': [('state', '!=', 'planned')]}"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,of_selected,optimized,planned,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nom du scénario..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Horizon de Planification">
+                            <field name="date_debut_horizon"/>
+                            <field name="date_fin_horizon"/>
+                            <field name="objectif_principal"/>
+                            <field name="temps_setup_bloc"/>
+                        </group>
+                        <group string="Machines CNC">
+                            <field name="machine_1_id"/>
+                            <field name="cap_outils_machine_1"/>
+                            <field name="machine_2_id"/>
+                            <field name="cap_outils_machine_2"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Résultats">
+                        <field name="nb_of_optimises"/>
+                        <field name="nb_blocs_generes"/>
+                        <field name="duree_totale_makespan"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="OF Candidats" name="of_candidats">
+                            <field name="of_candidat_ids" mode="tree">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="piece_type_id"/>
+                                    <field name="quantite"/>
+                                    <field name="date_planifiee_livraison"/>
+                                    <field name="nb_outils_total"/>
+                                    <field name="duree_operation_min"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="OF Sélectionnés" name="of_selectionnes"
+                              attrs="{'invisible': [('state', 'in', ['draft'])]}">
+                            <field name="of_selectionne_ids" mode="tree">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="piece_type_id"/>
+                                    <field name="quantite"/>
+                                    <field name="date_planifiee_livraison"/>
+                                    <field name="nb_outils_total"/>
+                                    <field name="duree_operation_min"/>
+                                    <field name="machine_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Blocs de Production" name="blocs"
+                              attrs="{'invisible': [('state', 'in', ['draft', 'of_selected'])]}">
+                            <field name="bloc_production_ids">
+                                <tree>
+                                    <field name="sequence"/>
+                                    <field name="name"/>
+                                    <field name="machine_id"/>
+                                    <field name="nb_of"/>
+                                    <field name="nb_outils_total"/>
+                                    <field name="cap_outils_machine"/>
+                                    <field name="taux_utilisation_outils" widget="progressbar"/>
+                                    <field name="duree_bloc_totale_min"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Timeline" name="timeline"
+                              attrs="{'invisible': [('state', '!=', 'planned')]}">
+                            <field name="timeline_ids">
+                                <tree>
+                                    <field name="of_id"/>
+                                    <field name="machine_id"/>
+                                    <field name="bloc_id"/>
+                                    <field name="date_debut"/>
+                                    <field name="date_fin"/>
+                                    <field name="duree_min"/>
+                                    <field name="retard_jours" 
+                                           decoration-danger="retard_jours &gt; 0"/>
+                                    <field name="is_setup"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Export Excel" name="excel"
+                              attrs="{'invisible': [('excel_file', '=', False)]}">
+                            <group>
+                                <field name="excel_filename" readonly="1"/>
+                                <field name="excel_file" filename="excel_filename"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue liste -->
+    <record id="view_planificateur_cnc_tree" model="ir.ui.view">
+        <field name="name">planificateur.cnc.tree</field>
+        <field name="model">planificateur.cnc</field>
+        <field name="arch" type="xml">
+            <tree string="Planificateurs CNC">
+                <field name="name"/>
+                <field name="date_creation"/>
+                <field name="nb_of_optimises"/>
+                <field name="nb_blocs_generes"/>
+                <field name="duree_totale_makespan"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_planificateur_cnc" model="ir.actions.act_window">
+        <field name="name">Planificateur CNC</field>
+        <field name="res_model">planificateur.cnc</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau scénario de planification
+            </p>
+            <p>
+                Le planificateur CNC optimise l'ordonnancement de vos OF
+                en créant des blocs de production et en respectant toutes
+                les contraintes machines, outils et temporelles.
+            </p>
+        </field>
+    </record>
+
+</odoo>
