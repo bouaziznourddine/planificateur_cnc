@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bloc_production_tree" model="ir.ui.view">
+        <field name="name">bloc.production.tree</field>
+        <field name="model">bloc.production</field>
+        <field name="arch" type="xml">
+            <tree><field name="nom"/><field name="machine_id"/><field name="duree_totale"/></tree>
+        </field>
+    </record>
+</odoo>

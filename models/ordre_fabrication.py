@@ -1,228 +1,112 @@
 # -*- coding: utf-8 -*-
-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
 class OrdreFabrication(models.Model):
     _name = 'ordre.fabrication'
-    _description = 'Ordre de Fabrication (OF)'
-    _order = 'date_planifiee_livraison, name'
-
-    name = fields.Char(string='Numéro OF', required=True, copy=False)
-    description = fields.Text(string='Description')
+    _description = 'Ordre de Fabrication'
+    _order = 'priorite desc, date_livraison'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    
+    # Identification
+    numero_of = fields.Char('Numéro OF', required=True, copy=False, tracking=True)
+    nom = fields.Char('Nom', compute='_compute_nom', store=True)
+    reference_client = fields.Char('Référence Client')
     
     # Dates
-    date_creation = fields.Datetime(
-        string='Date de création',
-        default=fields.Datetime.now,
-        readonly=True
-    )
-    date_planifiee_livraison = fields.Datetime(
-        string='Date prévue de livraison',
-        required=True,
-        help='Due date - objectif de livraison'
-    )
-    delai_fin_fab = fields.Datetime(
-        string='Délai limite de fabrication'
-    )
-    
-    # Type de pièce
-    piece_type_id = fields.Many2one(
-        'piece.type',
-        string='Type de pièce',
-        required=True
-    )
+    date_creation = fields.Date('Date Création', default=fields.Date.context_today, readonly=True)
+    date_livraison = fields.Date('Date Livraison', required=True, tracking=True)
+    date_debut_prevu = fields.Datetime('Début Prévu', readonly=True)
+    date_fin_prevu = fields.Datetime('Fin Prévu', readonly=True)
     
     # Quantités
-    quantite = fields.Integer(
-        string='Quantité commandée',
-        required=True,
-        default=1
-    )
-    pieces_qty = fields.Char(
-        string='Formule quantité',
-        help='Format: p × Qt'
-    )
-    nb_pieces_prevues = fields.Integer(
-        string='Pièces planifiées',
-        default=0
-    )
-    nb_pieces_chargees = fields.Integer(
-        string='Pièces chargées',
-        default=0
-    )
-    nb_pieces_terminees = fields.Integer(
-        string='Pièces terminées',
-        default=0
-    )
-    nb_pieces_par_palettes = fields.Integer(
-        string='Pièces par palette',
-        required=True,
-        default=1
-    )
+    quantite = fields.Integer('Quantité', required=True, default=1, tracking=True)
+    quantite_chargee = fields.Integer('Qté Chargée', readonly=True)
+    quantite_terminee = fields.Integer('Qté Terminée', readonly=True)
+    quantite_restante = fields.Integer('Qté Restante', compute='_compute_quantites')
     
-    # Montage
-    qty_montage_maxi = fields.Integer(
-        string='Capacité max montage',
-        help='Nombre maximum de pièces par montage'
-    )
-    qty_piece_montage = fields.Integer(
-        string='Pièces par montage',
-        help='Nombre de pièces réellement chargées'
-    )
-    phase_type_montage_1ere_op = fields.Char(
-        string='Phase et type montage 1ère op'
-    )
-    
-    # Outils
-    nb_outils_total = fields.Integer(
-        string='Nombre total d\'outils',
-        compute='_compute_outils_from_type',
-        store=True,
-        help='Nombre d\'outils nécessaires pour l\'OF complet'
-    )
-    
-    # Programme et ressources
-    programme_CN = fields.Char(string='Programme CN')
-    type_operation = fields.Char(string='Type d\'opération')
-    groupe_ressource = fields.Char(string='Groupe de ressources')
-    machine_id = fields.Many2one('machine.cnc', string='Machine affectée')
-    puce_RFID = fields.Char(string='Puce RFID')
-    
-    # Temps opératoires
-    duree_operation_min = fields.Float(
-        string='Durée opération (min)',
-        compute='_compute_durees',
-        store=True
-    )
-    duree_process_operation_min = fields.Float(
-        string='Durée processus (min)'
-    )
-    duree_chargement_machine_min = fields.Float(
-        string='Durée chargement (min)',
-        default=5.0
-    )
-    duree_rotation_table_min = fields.Float(
-        string='Durée rotation table (min)',
-        default=2.0,
-        help='Temps intervention opérateur entre OP1 et OP2'
-    )
-    duree_usinage_min = fields.Float(
-        string='Durée usinage (min)'
-    )
-    
-    # Dates d'exécution
-    date_debut_operation = fields.Datetime(string='Début opération')
-    date_fin_operation = fields.Datetime(string='Fin opération')
-    date_debut_chargement_machine = fields.Datetime(string='Début chargement')
-    date_fin_chargement_machine = fields.Datetime(string='Fin chargement')
-    date_debut_rotation_table = fields.Datetime(string='Début rotation')
-    date_fin_rotation_table = fields.Datetime(string='Fin rotation')
-    date_debut_usinage = fields.Datetime(string='Début usinage')
-    date_fin_usinage = fields.Datetime(string='Fin usinage')
-    
-    # Relations
-    piece_ids = fields.One2many(
-        'piece.fabrication',
-        'of_id',
-        string='Pièces'
-    )
-    
-    # État
+    # Priorité et état
+    priorite = fields.Integer('Priorité', default=5, tracking=True, help="1=Urgent, 10=Basse")
     state = fields.Selection([
         ('draft', 'Brouillon'),
         ('confirmed', 'Confirmé'),
-        ('planned', 'Planifié'),
-        ('in_progress', 'En cours'),
+        ('scheduled', 'Planifié'),
+        ('in_progress', 'En Cours'),
         ('done', 'Terminé'),
-        ('cancelled', 'Annulé')
-    ], string='État', default='draft', required=True)
+        ('cancel', 'Annulé'),
+    ], default='draft', tracking=True)
     
-    # Priorité
-    priority = fields.Selection([
-        ('0', 'Normale'),
-        ('1', 'Moyenne'),
-        ('2', 'Haute'),
-        ('3', 'Urgente')
-    ], string='Priorité', default='0')
+    # Relations
+    type_piece_id = fields.Many2one('piece.type', 'Type de Pièce', required=True, ondelete='restrict')
+    operation_ids = fields.Many2many('operation.fabrication', string='Opérations')
+    bloc_id = fields.Many2one('bloc.production', 'Bloc', readonly=True, ondelete='set null')
+    machine_assignee_id = fields.Many2one('machine.cnc', 'Machine Assignée', readonly=True)
+    piece_ids = fields.One2many('piece.fabrication', 'of_id', 'Pièces')
     
-    @api.depends('piece_type_id', 'piece_type_id.nb_outils_total')
-    def _compute_outils_from_type(self):
-        """Calcule le nombre d'outils depuis le type de pièce"""
-        for record in self:
-            if record.piece_type_id:
-                record.nb_outils_total = record.piece_type_id.nb_outils_total
+    # Calculs
+    temps_total_estime = fields.Float('Temps Total (min)', compute='_compute_temps_total', store=True)
+    nombre_outils_requis = fields.Integer('Outils Requis', compute='_compute_outils_requis', store=True)
+    
+    # Retard
+    retard_jours = fields.Integer('Retard (jours)', compute='_compute_retard')
+    est_en_retard = fields.Boolean('En Retard?', compute='_compute_retard')
+    
+    # Notes
+    notes = fields.Text('Notes')
+    
+    @api.depends('numero_of', 'type_piece_id')
+    def _compute_nom(self):
+        for rec in self:
+            if rec.type_piece_id:
+                rec.nom = f"{rec.numero_of} - {rec.type_piece_id.nom}"
             else:
-                record.nb_outils_total = 0
+                rec.nom = rec.numero_of
     
-    @api.depends('duree_chargement_machine_min', 'duree_usinage_min', 
-                 'duree_rotation_table_min', 'quantite')
-    def _compute_durees(self):
-        """Calcule la durée totale de l'opération"""
-        for record in self:
-            duree_piece = (
-                record.duree_chargement_machine_min +
-                record.duree_usinage_min +
-                record.duree_rotation_table_min
-            )
-            record.duree_operation_min = duree_piece * record.quantite
+    @api.depends('quantite', 'quantite_chargee', 'quantite_terminee')
+    def _compute_quantites(self):
+        for rec in self:
+            rec.quantite_restante = rec.quantite - rec.quantite_terminee
     
-    @api.constrains('nb_pieces_chargees', 'nb_pieces_prevues')
-    def _check_coherence_chargement(self):
-        """Contrainte 10 du rapport : Cohérence chargement"""
-        for record in self:
-            if record.nb_pieces_chargees > record.nb_pieces_prevues:
-                raise ValidationError(
-                    f"OF {record.name} : Le nombre de pièces chargées "
-                    f"({record.nb_pieces_chargees}) ne peut pas dépasser "
-                    f"le nombre de pièces prévues ({record.nb_pieces_prevues}). "
-                    f"Contrainte 10 du rapport : INACCEPTABLE."
-                )
+    @api.depends('operation_ids', 'quantite')
+    def _compute_temps_total(self):
+        for rec in self:
+            total = sum(op.temps_standard * rec.quantite for op in rec.operation_ids)
+            rec.temps_total_estime = total
     
-    @api.constrains('nb_pieces_terminees', 'quantite')
-    def _check_coherence_production(self):
-        """Contrainte 11 du rapport : Cohérence production"""
-        for record in self:
-            if record.nb_pieces_terminees > record.quantite:
-                raise ValidationError(
-                    f"OF {record.name} : Le nombre de pièces terminées "
-                    f"({record.nb_pieces_terminees}) ne peut pas dépasser "
-                    f"la quantité commandée ({record.quantite}). "
-                    f"Contrainte 11 du rapport : INACCEPTABLE."
-                )
+    @api.depends('operation_ids')
+    def _compute_outils_requis(self):
+        for rec in self:
+            total = sum(len(op.outil_ids) for op in rec.operation_ids)
+            rec.nombre_outils_requis = total
     
-    @api.constrains('qty_piece_montage', 'qty_montage_maxi')
-    def _check_capacite_montage(self):
-        """Contrainte 9 du rapport : Capacité montage"""
-        for record in self:
-            if record.qty_montage_maxi and record.qty_piece_montage > record.qty_montage_maxi:
-                raise ValidationError(
-                    f"OF {record.name} : Le nombre de pièces par montage "
-                    f"({record.qty_piece_montage}) dépasse la capacité maximale "
-                    f"({record.qty_montage_maxi}). "
-                    f"Contrainte 9 du rapport : INACCEPTABLE."
-                )
+    @api.depends('date_fin_prevu', 'date_livraison')
+    def _compute_retard(self):
+        for rec in self:
+            if rec.date_fin_prevu and rec.date_livraison:
+                delta = (rec.date_fin_prevu.date() - rec.date_livraison).days
+                rec.retard_jours = max(0, delta)
+                rec.est_en_retard = delta > 0
+            else:
+                rec.retard_jours = 0
+                rec.est_en_retard = False
     
-    def action_confirmer(self):
-        """Confirme l'OF et le rend disponible pour planification"""
-        self.write({'state': 'confirmed'})
+    def action_confirm(self):
+        """Confirmer l'OF"""
+        self.state = 'confirmed'
     
-    def action_planifier(self):
-        """Marque l'OF comme planifié"""
-        self.write({'state': 'planned'})
+    def action_cancel(self):
+        """Annuler l'OF"""
+        self.state = 'cancel'
     
-    def action_demarrer(self):
-        """Démarre la production"""
-        self.write({
-            'state': 'in_progress',
-            'date_debut_operation': fields.Datetime.now()
-        })
+    @api.constrains('quantite')
+    def _check_quantite(self):
+        for rec in self:
+            if rec.quantite <= 0:
+                raise ValidationError("La quantité doit être positive")
     
-    def action_terminer(self):
-        """Termine la production"""
-        self.write({
-            'state': 'done',
-            'date_fin_operation': fields.Datetime.now(),
-            'nb_pieces_terminees': self.quantite
-        })
+    @api.constrains('priorite')
+    def _check_priorite(self):
+        for rec in self:
+            if not (1 <= rec.priorite <= 10):
+                raise ValidationError("La priorité doit être entre 1 et 10")

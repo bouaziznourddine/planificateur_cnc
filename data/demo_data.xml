@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Machines -->
+        <record id="machine_1" model="machine.cnc">
+            <field name="nom">Machine CNC 1</field>
+            <field name="code">M1</field>
+            <field name="capacite_magasin">40</field>
+        </record>
+        <record id="machine_2" model="machine.cnc">
+            <field name="nom">Machine CNC 2</field>
+            <field name="code">M2</field>
+            <field name="capacite_magasin">40</field>
+        </record>
+    </data>
+</odoo>

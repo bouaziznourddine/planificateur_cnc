@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ordre_fabrication_tree" model="ir.ui.view">
+        <field name="name">ordre.fabrication.tree</field>
+        <field name="model">ordre.fabrication</field>
+        <field name="arch" type="xml">
+            <tree string="Ordres de Fabrication" decoration-danger="est_en_retard==True">
+                <field name="numero_of"/>
+                <field name="type_piece_id"/>
+                <field name="quantite"/>
+                <field name="date_livraison"/>
+                <field name="priorite"/>
+                <field name="temps_total_estime"/>
+                <field name="machine_assignee_id" />
+                <field name="est_en_retard" invisible="1"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="view_ordre_fabrication_form" model="ir.ui.view">
+        <field name="name">ordre.fabrication.form</field>
+        <field name="model">ordre.fabrication</field>
+        <field name="arch" type="xml">
+            <form string="Ordre de Fabrication">
+                <header>
+                    <button name="action_confirm" string="Confirmer" type="object" class="oe_highlight"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="numero_of"/>
+                            <field name="type_piece_id"/>
+                            <field name="quantite"/>
+                            <field name="priorite"/>
+                        </group>
+                        <group>
+                            <field name="date_livraison"/>
+                            <field name="temps_total_estime"/>
+                            <field name="nombre_outils_requis"/>
+                            <field name="machine_assignee_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Opérations">
+                            <field name="operation_ids"/>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_ordre_fabrication" model="ir.actions.act_window">
+        <field name="name">Ordres de Fabrication</field>
+        <field name="res_model">ordre.fabrication</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+    <menuitem id="menu_ordre_fabrication" name="Ordres de Fabrication"
+              parent="menu_planificateur_production" action="action_ordre_fabrication" sequence="10"/>
+</odoo>

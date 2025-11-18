@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire complète - À compléter dans le fichier final -->
+    <record id="view_planificateur_cnc_form" model="ir.ui.view">
+        <field name="name">planificateur.cnc.form</field>
+        <field name="model">planificateur.cnc</field>
+        <field name="arch" type="xml">
+            <form string="Planificateur CNC">
+                <header>
+                    <button name="action_validate" string="Valider" type="object" class="oe_highlight" 
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_optimiser" string="🧬 Optimiser" type="object" class="oe_highlight"
+                            attrs="{'invisible': [('state', 'not in', ['draft', 'validated'])]}"/>
+                    <button name="action_optimiser" string="🧬 Optimiser" type="object" class="oe_highlight"
+                             />
+                    <button name="action_export_excel" string="📑 Export Excel" type="object"
+                            attrs="{'invisible': [('state', '!=', 'optimized')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,optimized,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="nom" placeholder="Nom du scénario..."/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_debut"/>
+                            <field name="date_fin"/>
+                            <field name="horizon_planification"/>
+                        </group>
+                        <group>
+                            <field name="objectif_principal"/>
+                            <field name="temps_setup"/>
+                            <field name="use_genetic_algorithm"/>
+                        </group>
+                    </group>
+                    <group string="Résultats" attrs="{'invisible': [('state', 'in', ['draft', 'validated'])]}">
+                        <group>
+                            <field name="makespan_final"/>
+                            <field name="makespan_hours"/>
+                            <field name="total_delay"/>
+                        </group>
+                        <group>
+                            <field name="nb_of_optimises"/>
+                            <field name="nb_blocs"/>
+                            <field name="taux_utilisation"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Configuration AG" attrs="{'invisible': [('use_genetic_algorithm', '=', False)]}">
+                            <group>
+                                <group>
+                                    <field name="ga_population_size"/>
+                                    <field name="ga_generations"/>
+                                </group>
+                                <group>
+                                    <field name="ga_crossover_rate"/>
+                                    <field name="ga_mutation_rate"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Machines">
+                            <field name="machine_ids">
+                                <tree>
+                                    <field name="nom"/>
+                                    <field name="code"/>
+                                    <field name="capacite_magasin"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="OF Candidats">
+                            <field name="of_candidat_ids">
+                                <tree>
+                                    <field name="numero_of"/>
+                                    <field name="type_piece_id"/>
+                                    <field name="quantite"/>
+                                    <field name="date_livraison"/>
+                                    <field name="priorite"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="OF Sélectionnés" attrs="{'invisible': [('state', 'in', ['draft', 'validated'])]}">
+                            <field name="of_selectionne_ids"/>
+                        </page>
+                        <page string="Blocs" attrs="{'invisible': [('state', 'in', ['draft', 'validated'])]}">
+                            <field name="bloc_production_ids">
+                                <tree>
+                                    <field name="sequence"/>
+                                    <field name="nom"/>
+                                    <field name="machine_id"/>
+                                    <field name="duree_totale"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="📊 Gantt" attrs="{'invisible': [('state', '!=', 'optimized')]}">
+                            <button string="Voir Gantt (nouvel onglet)" type="object" name="action_view_gantt" 
+                                    attrs="{'invisible': [('gantt_attachment_id', '=', False)]}"
+                                    class="btn-primary"/>
+                            <field name="gantt_attachment_id" invisible="1"/>
+                            <group string="Diagramme de Gantt">
+                                <field name="gantt_iframe_html" nolabel="1" colspan="2"/>
+                            </group>
+                        </page>
+
+
+                  
+                        <page string="📈 Convergence" attrs="{'invisible': [('state', '!=', 'optimized')]}">
+                            <button string="Voir Convergence (nouvel onglet)" type="object" name="action_view_convergence" 
+                                    attrs="{'invisible': [('convergence_attachment_id', '=', False)]}"
+                                    class="btn-primary"/>
+                            <field name="convergence_attachment_id" invisible="1"/>
+                            <group string="Convergence AG">
+                                <field name="convergence_iframe_html" nolabel="1" colspan="2"/>
+                            </group>
+                        </page>
+                        <page string="📋 Statistiques" attrs="{'invisible': [('state', '!=', 'optimized')]}">
+                            <field name="statistics_report" widget="text" nolabel="1"/>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <record id="view_planificateur_cnc_tree" model="ir.ui.view">
+        <field name="name">planificateur.cnc.tree</field>
+        <field name="model">planificateur.cnc</field>
+        <field name="arch" type="xml">
+            <tree string="Planificateurs" decoration-info="state=='draft'" decoration-success="state=='optimized'">
+                <field name="nom"/>
+                <field name="date_debut"/>
+                <field name="date_fin"/>
+                <field name="objectif_principal"/>
+                <field name="nb_of_total"/>
+                <field name="makespan_hours" />
+                <field name="use_genetic_algorithm" invisible="1"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="action_planificateur_cnc" model="ir.actions.act_window">
+        <field name="name">Planificateurs CNC</field>
+        <field name="res_model">planificateur.cnc</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+    <menuitem id="menu_planificateur_cnc" name="Planificateurs" parent="menu_planificateur_planning"
+              action="action_planificateur_cnc" sequence="10"/>
+</odoo>

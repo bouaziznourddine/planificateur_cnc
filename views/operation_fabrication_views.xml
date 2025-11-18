@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_operation_fabrication_tree" model="ir.ui.view">
+        <field name="name">operation.fabrication.tree</field>
+        <field name="model">operation.fabrication</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom"><field name="code"/><field name="nom"/><field name="temps_standard"/></tree>
+        </field>
+    </record>
+    <record id="action_operation_fabrication" model="ir.actions.act_window">
+        <field name="name">Opérations</field>
+        <field name="res_model">operation.fabrication</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_operation_fabrication" name="Opérations" parent="menu_planificateur_config"
+              action="action_operation_fabrication" sequence="30"/>
+</odoo>

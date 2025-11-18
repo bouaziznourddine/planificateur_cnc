@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_machine_cnc_tree" model="ir.ui.view">
+        <field name="name">machine.cnc.tree</field>
+        <field name="model">machine.cnc</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="nom"/><field name="code"/><field name="capacite_magasin"/><field name="type_machine"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_machine_cnc" model="ir.actions.act_window">
+        <field name="name">Machines CNC</field>
+        <field name="res_model">machine.cnc</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_machine_cnc" name="Machines CNC" parent="menu_planificateur_config"
+              action="action_machine_cnc" sequence="10"/>
+</odoo>

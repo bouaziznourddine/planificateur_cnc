@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_outil_fabrication_tree" model="ir.ui.view">
+        <field name="name">outil.fabrication.tree</field>
+        <field name="model">outil.fabrication</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom"><field name="code"/><field name="nom"/><field name="type_outil"/></tree>
+        </field>
+    </record>
+    <record id="action_outil_fabrication" model="ir.actions.act_window">
+        <field name="name">Outils</field>
+        <field name="res_model">outil.fabrication</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_outil_fabrication" name="Outils" parent="menu_planificateur_config"
+              action="action_outil_fabrication" sequence="40"/>
+</odoo>

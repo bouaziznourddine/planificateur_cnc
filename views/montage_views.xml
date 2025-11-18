@@ -1,168 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- OF Views -->
-    <record id="view_of_form" model="ir.ui.view">
-        <field name="name">ordre.fabrication.form</field>
-        <field name="model">ordre.fabrication</field>
+    <record id="view_montage_piece_tree" model="ir.ui.view">
+        <field name="name">montage.piece.tree</field>
+        <field name="model">montage.piece</field>
         <field name="arch" type="xml">
-            <form string="Ordre de Fabrication">
-                <header>
-                    <button name="action_confirmer" string="Confirmer" type="object" 
-                            states="draft" class="oe_highlight"/>
-                    <button name="action_planifier" string="Planifier" type="object" 
-                            states="confirmed" class="oe_highlight"/>
-                    <button name="action_demarrer" string="Démarrer" type="object" 
-                            states="planned"/>
-                    <button name="action_terminer" string="Terminer" type="object" 
-                            states="in_progress" class="oe_highlight"/>
-                    <field name="state" widget="statusbar"/>
-                </header>
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="name"/>
-                            <field name="piece_type_id"/>
-                            <field name="quantite"/>
-                            <field name="date_planifiee_livraison"/>
-                        </group>
-                        <group>
-                            <field name="nb_outils_total"/>
-                            <field name="duree_operation_min"/>
-                            <field name="machine_id"/>
-                            <field name="priority" widget="priority"/>
-                        </group>
-                    </group>
-                    <group string="Progression">
-                        <field name="nb_pieces_prevues"/>
-                        <field name="nb_pieces_chargees"/>
-                        <field name="nb_pieces_terminees"/>
-                    </group>
-                </sheet>
-            </form>
+            <tree editable="bottom"><field name="nom"/><field name="code"/><field name="capacite_max"/></tree>
         </field>
     </record>
-
-    <record id="view_of_tree" model="ir.ui.view">
-        <field name="name">ordre.fabrication.tree</field>
-        <field name="model">ordre.fabrication</field>
-        <field name="arch" type="xml">
-            <tree string="Ordres de Fabrication">
-                <field name="name"/>
-                <field name="piece_type_id"/>
-                <field name="quantite"/>
-                <field name="date_planifiee_livraison"/>
-                <field name="nb_outils_total"/>
-                <field name="duree_operation_min"/>
-                <field name="priority" widget="priority"/>
-                <field name="state"/>
-            </tree>
-        </field>
-    </record>
-
-    <record id="action_of" model="ir.actions.act_window">
-        <field name="name">Ordres de Fabrication</field>
-        <field name="res_model">ordre.fabrication</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Piece Type Views -->
-    <record id="view_piece_type_form" model="ir.ui.view">
-        <field name="name">piece.type.form</field>
-        <field name="model">piece.type</field>
-        <field name="arch" type="xml">
-            <form string="Type de Pièce">
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="palette_type"/>
-                        <field name="operation_01_id"/>
-                        <field name="operation_02_id"/>
-                        <field name="montage_id"/>
-                        <field name="nb_outils_total"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_piece_type" model="ir.actions.act_window">
-        <field name="name">Types de Pièces</field>
-        <field name="res_model">piece.type</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Operation Views -->
-    <record id="action_operation" model="ir.actions.act_window">
-        <field name="name">Opérations</field>
-        <field name="res_model">operation.fabrication</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Outil Views -->
-    <record id="action_outil" model="ir.actions.act_window">
-        <field name="name">Outils</field>
-        <field name="res_model">outil.fabrication</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Palette Views -->
-    <record id="action_palette" model="ir.actions.act_window">
-        <field name="name">Palettes</field>
-        <field name="res_model">palette.fabrication</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Montage Views -->
-    <record id="action_montage" model="ir.actions.act_window">
+    <record id="action_montage_piece" model="ir.actions.act_window">
         <field name="name">Montages</field>
         <field name="res_model">montage.piece</field>
         <field name="view_mode">tree,form</field>
     </record>
-
-    <!-- Machine Views -->
-    <record id="view_machine_form" model="ir.ui.view">
-        <field name="name">machine.cnc.form</field>
-        <field name="model">machine.cnc</field>
-        <field name="arch" type="xml">
-            <form string="Machine CNC">
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="type_machine"/>
-                        <field name="cap_outil"/>
-                        <field name="has_rotary"/>
-                        <field name="state"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_machine" model="ir.actions.act_window">
-        <field name="name">Machines CNC</field>
-        <field name="res_model">machine.cnc</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Operateur Views -->
-    <record id="action_operateur" model="ir.actions.act_window">
-        <field name="name">Opérateurs</field>
-        <field name="res_model">operateur.production</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Piece Views -->
-    <record id="action_piece" model="ir.actions.act_window">
-        <field name="name">Pièces</field>
-        <field name="res_model">piece.fabrication</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Timeline Views -->
-    <record id="action_timeline" model="ir.actions.act_window">
-        <field name="name">Planning Timeline</field>
-        <field name="res_model">planning.timeline</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
+    <menuitem id="menu_montage_piece" name="Montages" parent="menu_planificateur_config"
+              action="action_montage_piece" sequence="60"/>
 </odoo>
