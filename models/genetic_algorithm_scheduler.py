@@ -8,7 +8,7 @@ Date: Novembre 2025
 
 import random
 import numpy as np
-from datetime import timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Tuple, Dict
 import logging
 
@@ -428,7 +428,15 @@ def create_gantt_chart_data(individual: Individual, of_data: Dict, machines: Lis
         Liste de dictionnaires avec les informations de planification pour chaque opération
     """
     gantt_data = []
-    machine_end_times = {i: start_date for i in range(len(machines))}
+    
+    # CORRECTION IMPORTANTE: Convertir start_date en datetime si c'est une date
+    if isinstance(start_date, date) and not isinstance(start_date, datetime):
+        start_datetime = datetime.combine(start_date, datetime.min.time())
+    else:
+        start_datetime = start_date
+    
+    # Initialiser avec des datetime, pas des dates
+    machine_end_times = {i: start_datetime for i in range(len(machines))}
     
     for idx, block in enumerate(individual.block_structure):
         machine_id = individual.machine_assignments[idx]

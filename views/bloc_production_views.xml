@@ -4,7 +4,7 @@
         <field name="name">bloc.production.tree</field>
         <field name="model">bloc.production</field>
         <field name="arch" type="xml">
-            <tree><field name="nom"/><field name="machine_id"/><field name="duree_totale"/></tree>
+            <tree><field name="nom"/><field name="machine_id"/><field name="duree_totale"/><field name="capacite_outils_utilisee"/></tree>
         </field>
     </record>
 </odoo>

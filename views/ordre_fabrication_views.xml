@@ -10,6 +10,7 @@
                 <field name="quantite"/>
                 <field name="date_livraison"/>
                 <field name="priorite"/>
+                <field name="nombre_outils_requis"/>
                 <field name="temps_total_estime"/>
                 <field name="machine_assignee_id" />
                 <field name="est_en_retard" invisible="1"/>

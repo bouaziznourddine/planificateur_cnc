@@ -11,8 +11,12 @@
                             attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <button name="action_optimiser" string="🧬 Optimiser" type="object" class="oe_highlight"
                             attrs="{'invisible': [('state', 'not in', ['draft', 'validated'])]}"/>
-                    <button name="action_optimiser" string="🧬 Optimiser" type="object" class="oe_highlight"
-                             />
+                    <!-- <button name="action_optimiser" string="🧬 Optimiser" type="object" class="oe_highlight"
+                             /> -->
+                              <button name="action_reset" string="↩️ Réinitialiser" type="object" 
+            states="optimized" class="btn-secondary"
+            confirm="Voulez-vous réinitialiser le planificateur ? Les résultats d'optimisation seront supprimés."/>
+    
                     <button name="action_export_excel" string="📑 Export Excel" type="object"
                             attrs="{'invisible': [('state', '!=', 'optimized')]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,optimized,done"/>
@@ -73,6 +77,9 @@
                                     <field name="numero_of"/>
                                     <field name="type_piece_id"/>
                                     <field name="quantite"/>
+                                    <field name="nombre_outils_requis"/>
+
+                                    
                                     <field name="date_livraison"/>
                                     <field name="priorite"/>
                                     <field name="state"/>
@@ -88,7 +95,9 @@
                                     <field name="sequence"/>
                                     <field name="nom"/>
                                     <field name="machine_id"/>
+                                    <field name="capacite_outils_utilisee"/>
                                     <field name="duree_totale"/>
+
                                 </tree>
                             </field>
                         </page>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Générateur de Diagramme de Gantt pour le planificateur CNC
-Utilise Plotly pour créer des diagrammes interactifs
+Version corrigée - Affichage correct de toutes les tâches
 Auteur: Bouaziz Nourddine - CESI LINEACT
 """
 
@@ -127,51 +127,76 @@ class GanttChartGenerator:
     def generate_advanced_gantt(self) -> go.Figure:
         """
         Générer un diagramme de Gantt avancé avec plus de détails.
+        CORRECTION: Utiliser create_gantt de figure_factory pour un affichage correct
         """
-        fig = go.Figure()
+        # Préparer les données au format DataFrame pour create_gantt
+        df_data = []
         
-        # Grouper par machine
-        machines = sorted(set(item['machine'] for item in self.gantt_data))
-        
-        # Ajouter les barres pour chaque tâche
         for item in self.gantt_data:
-            machine = item['machine']
-            
-            # Calculer la durée en heures pour l'affichage
+            # S'assurer que start et end sont des datetime
             start = item['start']
             end = item['end']
-            duration_hours = (end - start).total_seconds() / 3600
             
-            # Si durée = 0, mettre une durée minimale pour la visibilité
-            if duration_hours == 0:
-                duration_hours = 0.5  # 30 minutes minimum pour être visible
+            # Convertir en datetime si nécessaire
+            if isinstance(start, str):
+                start = datetime.fromisoformat(start)
+            if isinstance(end, str):
+                end = datetime.fromisoformat(end)
             
-            # Couleur selon le type
-            if item.get('type') == 'setup':
-                color = '#FFA500'
-            else:
-                color = item.get('color', '#4CAF50')
-            
-            # Texte du hover
-            hover_text = self._format_hover_text(item, duration_hours)
-            
-            # Ajouter la barre - IMPORTANT: utiliser les dates directement
-            fig.add_trace(go.Bar(
-                x=[duration_hours * 3600000],  # Convertir en millisecondes
-                y=[machine],
-                orientation='h',
-                name=item['task'],
-                base=start,
-                marker=dict(
-                    color=color,
-                    line=dict(color='rgb(0,0,0)', width=1)
-                ),
-                hovertemplate=hover_text + '<extra></extra>',
-                showlegend=False,
-                width=0.8  # Largeur des barres
-            ))
+            # Si la date est juste une date (pas datetime), convertir
+            if hasattr(start, 'date') and not hasattr(start, 'hour'):
+                start = datetime.combine(start, datetime.min.time())
+            if hasattr(end, 'date') and not hasattr(end, 'hour'):
+                end = datetime.combine(end, datetime.min.time())
+                
+            df_data.append({
+                'Task': item['task'],
+                'Start': start,
+                'Finish': end,
+                'Resource': item['machine'],
+                'Description': self._format_description(item)
+            })
         
-        # Layout
+        if not df_data:
+            fig = go.Figure()
+            fig.update_layout(
+                title=self.title,
+                annotations=[{
+                    'text': 'Aucune donnée de planning disponible',
+                    'xref': 'paper',
+                    'yref': 'paper',
+                    'showarrow': False,
+                    'font': {'size': 20}
+                }]
+            )
+            return fig
+        
+        df = pd.DataFrame(df_data)
+        
+        # Créer le dictionnaire de couleurs
+        colors_dict = {}
+        for item in self.gantt_data:
+            task_name = item['task']
+            if item.get('type') == 'setup':
+                colors_dict[task_name] = '#FFA500'  # Orange pour setup
+            else:
+                colors_dict[task_name] = item.get('color', '#4CAF50')  # Vert pour production
+        
+        # Créer le Gantt avec figure_factory - MÉTHODE CORRECTE
+        fig = ff.create_gantt(
+            df,
+            colors=colors_dict,
+            index_col='Resource',
+            show_colorbar=False,
+            group_tasks=True,
+            showgrid_x=True,
+            showgrid_y=True,
+            title=self.title,
+            bar_width=0.4,
+            height=max(400, len(set(item['machine'] for item in self.gantt_data)) * 150)
+        )
+        
+        # Améliorer le layout
         fig.update_layout(
             title=dict(
                 text=self.title,
@@ -184,27 +209,31 @@ class GanttChartGenerator:
                 showgrid=True,
                 gridwidth=1,
                 gridcolor='LightGray',
-                type='date',
-                tickformat='%d/%m/%Y\n%H:%M'
+                tickformat='%d/%m/%Y %H:%M',
+                type='date'
             ),
             yaxis=dict(
                 title='Machines',
                 showgrid=True,
                 gridwidth=1,
-                gridcolor='LightGray',
-                categoryorder='array',
-                categoryarray=machines
+                gridcolor='LightGray'
             ),
-            barmode='overlay',
-            height=max(400, len(machines) * 100),
             hovermode='closest',
             plot_bgcolor='#f8f9fa',
             paper_bgcolor='white',
             font=dict(size=12, family='Arial, sans-serif'),
-            bargap=0.1
         )
         
+        # Mettre à jour le hover pour afficher les détails
+        for i, item in enumerate(self.gantt_data):
+            if i < len(fig.data):
+                duration = (item['end'] - item['start']).total_seconds() / 3600
+                hover_text = self._format_hover_text(item, duration)
+                fig.data[i].hoverinfo = 'text'
+                fig.data[i].text = hover_text
+        
         return fig
+
     def save_as_html(self, filename: str = "gantt_chart.html"):
         """
         Sauvegarder le diagramme en HTML interactif.
@@ -299,7 +328,7 @@ class GanttChartGenerator:
             y=best_fitness_history,
             mode='lines',
             name='Meilleure Fitness',
-            line=dict(color='#4CAF50', width=2)
+            line=dict(color='#4CAF50', width=2),showlegend=True,
         ))
         
         # Courbe fitness moyenne
@@ -308,7 +337,7 @@ class GanttChartGenerator:
             y=avg_fitness_history,
             mode='lines',
             name='Fitness Moyenne',
-            line=dict(color='#2196F3', width=2, dash='dash')
+            line=dict(color='#2196F3', width=2, dash='dash'),showlegend=True,
         ))
         
         fig.update_layout(
