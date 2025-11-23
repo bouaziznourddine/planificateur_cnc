@@ -5,14 +5,27 @@ from datetime import datetime, timedelta
 import logging
 import base64
 from io import BytesIO
+import base64
+from io import BytesIO
+from datetime import datetime, time
+import logging
 
 try:
-    from ..genetic_algorithm_scheduler import GeneticAlgorithmScheduler, create_gantt_chart_data
-    from ..gantt_chart_generator import GanttChartGenerator, generate_statistics_report
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+except ImportError:
+    openpyxl = None
+
+_logger = logging.getLogger(__name__)
+try:
+    from .genetic_algorithm_scheduler import GeneticAlgorithmScheduler, create_gantt_chart_data
+    from .gantt_chart_generator import GanttChartGenerator, generate_statistics_report
     AG_AVAILABLE = True
+    print("***********************************             AG ok")
 except ImportError:
     AG_AVAILABLE = False
-    logging.warning("AG non disponible. Installez: pip install plotly pandas numpy")
+    print("AG non disponible. Installez: pip install plotly pandas numpy")
 
 _logger = logging.getLogger(__name__)
 
@@ -180,10 +193,42 @@ class PlanificateurCNC(models.Model):
             raise UserError("Aucune machine.")
         
         if self.use_genetic_algorithm and AG_AVAILABLE:
+            print("***********************************            AG ok2")
             return self._optimize_with_ga()
+            
         else:
+            print("***********************************            heuristic ok2")
             return self._optimize_heuristic()
-    
+
+        return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
+    def action_reset(self):
+        """Réinitialise le planificateur pour permettre une nouvelle optimisation"""
+        self.ensure_one()
+        
+        # Supprimer les résultats précédents
+        self.write({
+            'state': 'validated',  # ou 'draft' selon ton workflow
+            'resultat_gantt': False,
+            'resultat_convergence': False,
+            'resultat_stats': False,
+            # Ajouter ici tous les champs de résultats à réinitialiser
+            # Par exemple:
+            # 'best_makespan': 0,
+            # 'best_fitness': 0,
+            # 'planning_ids': [(5, 0, 0)],  # Supprimer les lignes de planning
+        })
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     def _optimize_with_ga(self):
         """Optimisation par algorithme génétique"""
         start = datetime.now()
@@ -217,16 +262,28 @@ class PlanificateurCNC(models.Model):
             
             self._generate_visualizations(solution, ga.of_data, stats)
             
+            # return {
+            #     'type': 'ir.actions.client',
+            #     'tag': 'display_notification',
+            #     'params': {
+            #         'title': 'Optimisation Réussie!',
+            #         'message': f'Makespan: {self.makespan_final:.0f} min ({self.makespan_hours:.1f}h)',
+            #         'type': 'success',
+            #         'sticky': False,
+            #     }
+            # }
             return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Optimisation Réussie!',
-                    'message': f'Makespan: {self.makespan_final:.0f} min ({self.makespan_hours:.1f}h)',
-                    'type': 'success',
-                    'sticky': False,
-                }
-            }
+        'type': 'ir.actions.act_window',
+        'res_model': self._name,
+        'res_id': self.id,
+        'view_mode': 'form',
+        'target': 'current',
+    }
+    #         return {
+    #     'type': 'ir.actions.client',
+    #     'tag': 'reload',
+    # }
+
         except Exception as e:
             _logger.error(f"Erreur AG: {e}", exc_info=True)
             raise UserError(f"Erreur d'optimisation: {str(e)}")
@@ -249,8 +306,7 @@ class PlanificateurCNC(models.Model):
     
     def _apply_solution(self, solution, of_data):
         """Appliquer la solution AG"""
-        print("solution")
-        print(solution)
+ 
         self.bloc_production_ids.unlink()
         self.timeline_ids.unlink()
         
@@ -286,7 +342,7 @@ class PlanificateurCNC(models.Model):
         try:
             gantt_data = create_gantt_chart_data(
                 solution, of_data, self.machine_ids,
-                self.temps_setup, self.date_debut or datetime.now()
+                self.temps_setup, datetime.combine(self.date_debut, datetime.min.time()) if self.date_debut else datetime.now()
             )
 
             gen = GanttChartGenerator(gantt_data, f"Planning - {self.nom}")
@@ -350,9 +406,159 @@ class PlanificateurCNC(models.Model):
         return text
     
     def action_export_excel(self):
-        """Exporter en Excel"""
-        # TODO: Implémenter export Excel avec openpyxl
-        raise UserError("Export Excel en cours d'implémentation")
+        """Exporter les résultats en Excel avec OpenPyXL - Correction Dates et Mapping"""
+        self.ensure_one()
+        
+        if not openpyxl:
+            raise UserError("La librairie 'openpyxl' n'est pas installée. (pip install openpyxl)")
+
+        # Création du classeur
+        wb = openpyxl.Workbook()
+        
+        # --- CONFIGURATION DES STYLES ---
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+        center_align = Alignment(horizontal='center', vertical='center')
+        border_style = Side(style='thin')
+        thin_border = Border(left=border_style, right=border_style, top=border_style, bottom=border_style)
+
+        # --- FEUILLE 1 : RÉSUMÉ ---
+        ws_summary = wb.active
+        ws_summary.title = "Résumé"
+        
+        summary_data = [
+            ["Scénario", self.nom],
+            ["Date Début", self.date_debut],
+            ["Date Fin", self.date_fin],
+            ["Objectif", self.objectif_principal],
+            [], 
+            ["RÉSULTATS", ""],
+            ["Makespan (min)", self.makespan_final],
+            ["Retard Total (min)", self.total_delay],
+            ["Taux Utilisation (%)", f"{self.taux_utilisation:.2f}%"],
+            ["Nombre OF", self.nb_of_optimises],
+        ]
+        
+        for row_idx, row_data in enumerate(summary_data, 1):
+            for col_idx, value in enumerate(row_data, 1):
+                cell = ws_summary.cell(row=row_idx, column=col_idx, value=str(value) if value is not None else "")
+                if row_idx == 6 or col_idx == 1:
+                    cell.font = Font(bold=True)
+        
+        ws_summary.column_dimensions['A'].width = 25
+        ws_summary.column_dimensions['B'].width = 40
+
+        # --- FEUILLE 2 : DÉTAIL PLANNING ---
+        ws_plan = wb.create_sheet("Planning Détaillé")
+        
+        headers = [
+            'Machine', 'Bloc', 'Séquence', 'Numéro OF', 
+            'Type Pièce', 'Quantité', 'Date Début', 'Date Fin', 
+            'Outils Requis', 'Priorité', 'Durée (min)', 'État'
+        ]
+        
+        # Écriture des en-têtes
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws_plan.cell(row=1, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = thin_border
+
+        # --- MAPPING AVANCÉ DES DATES ---
+        # On construit un dictionnaire pour retrouver les dates rapidement
+        # Clé : (ID_BLOC, ID_OF) pour unicité
+        timeline_map = {}
+        
+        # On parcourt la timeline (source de vérité pour les dates)
+        for t in self.timeline_ids:
+            if t.of_id: # Si c'est une tâche de production (pas un setup)
+                # On stocke les dates. Clé = ID de l'OF
+                # Si vous avez le champ bloc_id dans timeline, utilisez (t.bloc_id.id, t.of_id.id)
+                # Sinon on utilise juste of_id (attention si un OF est scindé)
+                key = t.of_id.id
+                if t.bloc_id:
+                     key = (t.bloc_id.id, t.of_id.id)
+                
+                timeline_map[key] = {
+                    'start': t.date_debut,
+                    'end': t.date_fin
+                }
+
+        # Remplissage des données
+        row = 2
+        # Tri par Machine puis Séquence pour un affichage logique
+        sorted_blocs = self.bloc_production_ids.sorted(key=lambda b: (b.machine_id.nom, b.sequence))
+        
+        for bloc in sorted_blocs:
+            for of in bloc.of_ids:
+                # Récupération des dates
+                # 1. Essai avec la clé composite (Bloc, OF)
+                dates = timeline_map.get((bloc.id, of.id))
+                
+                # 2. Si échec, essai avec juste l'ID OF (au cas où le lien bloc manque dans timeline)
+                if not dates:
+                    dates = timeline_map.get(of.id)
+                
+                # Formatage des dates
+                start_str = ""
+                end_str = ""
+                if dates:
+                    if dates.get('start'):
+                        start_str = dates['start'].strftime('%d/%m/%Y %H:%M')
+                    if dates.get('end'):
+                        end_str = dates['end'].strftime('%d/%m/%Y %H:%M')
+
+                # Écriture ligne
+                ws_plan.cell(row=row, column=1, value=bloc.machine_id.nom)
+                ws_plan.cell(row=row, column=2, value=bloc.nom)
+                ws_plan.cell(row=row, column=3, value=bloc.sequence)
+                ws_plan.cell(row=row, column=4, value=of.numero_of)
+                ws_plan.cell(row=row, column=5, value=of.type_piece_id.nom if of.type_piece_id else "")
+                ws_plan.cell(row=row, column=6, value=of.quantite)
+                
+                # Dates
+                ws_plan.cell(row=row, column=7, value=start_str).alignment = center_align
+                ws_plan.cell(row=row, column=8, value=end_str).alignment = center_align
+                
+                ws_plan.cell(row=row, column=9, value=of.nombre_outils_requis)
+                ws_plan.cell(row=row, column=10, value=of.priorite)
+                ws_plan.cell(row=row, column=11, value=of.temps_total_estime)
+                
+                # État traduit
+                state_val = dict(of._fields['state'].selection).get(of.state) if of.state else ""
+                ws_plan.cell(row=row, column=12, value=state_val)
+
+                # Bordures
+                for col in range(1, 13):
+                    ws_plan.cell(row=row, column=col).border = thin_border
+
+                row += 1
+
+        # Ajustement automatique largeurs
+        for column_cells in ws_plan.columns:
+            length = max(len(str(cell.value) or "") for cell in column_cells)
+            ws_plan.column_dimensions[get_column_letter(column_cells[0].column)].width = min(length + 3, 50)
+
+        # --- SAUVEGARDE ---
+        fp = BytesIO()
+        wb.save(fp)
+        fp.seek(0)
+        data = fp.read()
+        fp.close()
+        
+        filename = f"Planning_{self.nom.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        
+        self.write({
+            'excel_file': base64.b64encode(data),
+            'excel_filename': filename
+        })
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/?model={self._name}&id={self.id}&field=excel_file&download=true&filename={filename}',
+            'target': 'self',
+        }
     
     def action_cancel(self):
         """Annuler"""
