@@ -328,7 +328,7 @@ class GanttChartGenerator:
             y=best_fitness_history,
             mode='lines',
             name='Meilleure Fitness',
-            line=dict(color='#4CAF50', width=2),showlegend=True,
+            line=dict(color='#4CAF50', width=2)
         ))
         
         # Courbe fitness moyenne
@@ -337,7 +337,7 @@ class GanttChartGenerator:
             y=avg_fitness_history,
             mode='lines',
             name='Fitness Moyenne',
-            line=dict(color='#2196F3', width=2, dash='dash'),showlegend=True,
+            line=dict(color='#2196F3', width=2, dash='dash')
         ))
         
         fig.update_layout(

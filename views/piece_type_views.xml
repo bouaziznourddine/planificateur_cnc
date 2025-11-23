@@ -4,7 +4,7 @@
         <field name="name">piece.type.tree</field>
         <field name="model">piece.type</field>
         <field name="arch" type="xml">
-            <tree editable="bottom"><field name="nom"/><field name="code"/><field name="temps_cycle"/></tree>
+            <tree editable="bottom"><field name="nom"/><field name="code"/><field name="palette_type"/><field name="temps_cycle"/></tree>
         </field>
     </record>
     <record id="action_piece_type" model="ir.actions.act_window">
