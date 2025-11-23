@@ -111,6 +111,15 @@
                                 <field name="gantt_iframe_html" nolabel="1" colspan="2"/>
                             </group>
                         </page>
+                        <page string="📊Planning Détail Pièces par OF" attrs="{'invisible': [('state', '!=', 'optimized')]}">
+                            <button string="Voir Planning Détail Pièces par OF (nouvel onglet)" type="object" name="action_view_gantt_by_of" 
+                                    attrs="{'invisible': [('gantt_by_of_attachment_id', '=', False)]}"
+                                    class="btn-primary"/>
+                            <field name="gantt_by_of_attachment_id" invisible="1"/>
+                            <group string="Planning Détail Pièces">
+                                <field name="gantt_by_of_iframe_html" nolabel="1" colspan="2"/>
+                            </group>
+                        </page>
 
 
                   
